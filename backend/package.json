@@ -1,0 +1,23 @@
+{
+  "name": "movie-booking-platform_backend",
+  "version": "1.0.0",
+  "description": "V1 of movie-booking-platform: Implementing Concurrency Control Strategy for theater's Seat Booking Protocols, exploring various implementations and their limitations. ",
+  "homepage": "https://github.com/Onkar-010/seat-booking-paltform#readme",
+  "bugs": {
+    "url": "https://github.com/Onkar-010/seat-booking-paltform/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Onkar-010/seat-booking-paltform.git"
+  },
+  "license": "ISC",
+  "author": "Onkar Pawar",
+  "type": "commonjs",
+  "main": "app.ts",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
