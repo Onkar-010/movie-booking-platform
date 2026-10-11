@@ -1,9 +1,11 @@
 /** @format */
 import { app } from "./app";
 import { config } from "./config/index";
+import { connectDB } from "./config/dbConfig";
 
 const startServer = async (): Promise<void> => {
-  console.log("4. Starting server...");
+  await connectDB();
+  console.log("✅ Database connected successfully");
   app.listen(config.port, () => {
     console.log(`🚀 Server running on http://localhost:${config.port}`);
   });
