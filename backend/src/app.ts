@@ -9,6 +9,7 @@ import { errorHandler } from "./middleware/error.middleware";
 import { AppError } from "./utilities/appError.utility";
 import { validateBody } from "./middleware/validator.middleware";
 import { registerSchema } from "./validators/auth.validator";
+import cookieParser from "cookie-parser";
 
 //create Express Application
 export const app = express();
@@ -23,6 +24,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(config.api.prefix, apiRoutes.router);
 
 app.get("/", (req, res) => {
