@@ -13,10 +13,10 @@ import { UnitOfWork } from "../infrastructure/database/UnitOfWork";
 
 export class RefreshTokenService {
   //Setting up Model in repo
-  private readonly refreshrepo: RefreshTokenRepository;
+  private readonly refreshrepo: RefreshTokenRepository<typeof refresh_token>;
   private readonly uow: UnitOfWork;
   constructor() {
-    this.refreshrepo = new RefreshTokenRepository();
+    this.refreshrepo = new RefreshTokenRepository(refresh_token);
     this.uow = new UnitOfWork();
   }
 
@@ -34,7 +34,7 @@ export class RefreshTokenService {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       family_id,
     };
-    const result = await this.refreshrepo.create(data);
+    const result = await this.refreshrepo.createRefreshToken(data);
 
     return { result, token };
   }
@@ -44,7 +44,10 @@ export class RefreshTokenService {
     // Transaction
     const outcome = await this.uow.transaction(async (tx) => {
       // 1. Find the token.
-      const result = await this.refreshrepo.findByHash(token_hash, tx);
+      const result = await this.refreshrepo.findRefreshTokenByHash(
+        token_hash,
+        tx,
+      );
 
       // 2. Validate existence and expiry.
       if (!result || result.expires_at <= new Date()) {
@@ -54,7 +57,10 @@ export class RefreshTokenService {
       // 3. Detect revoked-token reuse.
       if (result.revoked_at) {
         if (result.replaced_by_token_id) {
-          await this.refreshrepo.revokeActiveByFamily(result.family_id, tx);
+          await this.refreshrepo.revokeActiveTokensByFamily(
+            result.family_id,
+            tx,
+          );
 
           return { kind: "reuse" as const };
         }
@@ -74,14 +80,17 @@ export class RefreshTokenService {
       };
 
       // 5. Insert replacement within the transaction.
-      const newresult: any = await this.refreshrepo.create(data, tx);
+      const newresult: any = await this.refreshrepo.createRefreshToken(
+        data,
+        tx,
+      );
 
       if (!newresult) {
         throw new AppError("Failed to create replacement token", 500);
       }
 
       // 6. Revoke the old token and link it to the replacement.
-      const revoked = await this.refreshrepo.revokeAndReplace(
+      const revoked = await this.refreshrepo.revokeAndReplaceRefreshToken(
         result.id,
         newresult.id,
         tx,
@@ -126,7 +135,10 @@ export class RefreshTokenService {
 
     // 2. Find and validate the token.
     return this.uow.transaction(async (tx) => {
-      const exists = await this.refreshrepo.findByHash(token_hash, tx);
+      const exists = await this.refreshrepo.findRefreshTokenByHash(
+        token_hash,
+        tx,
+      );
 
       if (!exists) {
         throw new AppError("Invalid refresh token", 401);
@@ -141,7 +153,7 @@ export class RefreshTokenService {
       }
 
       // 3. Revoke the token.
-      const revoked = await this.refreshrepo.updateById(
+      const revoked = await this.refreshrepo.updateRefreshToken(
         exists.id,
         {
           revoked_at: new Date(),
@@ -160,7 +172,7 @@ export class RefreshTokenService {
 
   async revokeAllRefreshTokensByFamily(family_id: string) {
     return await this.uow.transaction(async (tx) => {
-      return await this.refreshrepo.revokeActiveByFamily(family_id, tx);
+      return await this.refreshrepo.revokeActiveTokensByFamily(family_id, tx);
     });
   }
 
@@ -169,7 +181,10 @@ export class RefreshTokenService {
 
     return await this.uow.transaction(async (tx) => {
       // 1. Find refresh token
-      const exists = await this.refreshrepo.findByHash(token_hash, tx);
+      const exists = await this.refreshrepo.findRefreshTokenByHash(
+        token_hash,
+        tx,
+      );
 
       // 2. Validate existence
       if (!exists) {
@@ -187,7 +202,10 @@ export class RefreshTokenService {
       }
 
       // 5. Revoke all active tokens in this family
-      return await this.refreshrepo.revokeAllByUserId(exists.user_id, tx);
+      return await this.refreshrepo.revokeAllRefreshTokensByUserId(
+        exists.user_id,
+        tx,
+      );
     });
   }
 }

@@ -8,6 +8,13 @@
       "when": 1792219215278,
       "tag": "0000_petite_firebird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793771054961,
+      "tag": "0001_lively_rumiko_fujikawa",
+      "breakpoints": true
     }
   ]
 }

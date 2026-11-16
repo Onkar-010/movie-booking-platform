@@ -1,69 +1,61 @@
 /** @format */
 
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 import { BaseRepository } from "./base.repository";
-import { DbTransaction } from "../db/types";
-import { users } from "../db/schemas/users.schema"; // adjust to your schema path
+import type { PgTable } from "drizzle-orm/pg-core";
 
-export class AuthRepository extends BaseRepository<typeof users> {
-  constructor() {
-    super(users);
+export class AuthRepository<
+  TTable extends PgTable,
+> extends BaseRepository<TTable> {
+  constructor(table: TTable) {
+    super(table);
   }
 
-  // Normalize in one place so lookups and inserts always agree.
-  private normalizeEmail(email: string) {
-    return email.trim().toLowerCase();
+  async createUser(data: InferInsertModel<TTable>) {
+    const [user] = await this.db.insert(this.table).values(data).returning();
+    return user ?? null;
   }
 
-  async findByEmail(email: string, tx?: DbTransaction) {
-    const executor = tx ?? this.db;
-    const [user] = await executor
+  async findByEmail(email: string) {
+    const table = this.table as any;
+    const result = await this.db
       .select()
-      .from(users)
-      .where(eq(users.email, this.normalizeEmail(email)))
-      .limit(1);
+      .from(table)
+      .where(eq(table.email, email));
 
-    return user ?? null;
+    return result;
   }
 
-  // Safe shape for responses: no password_hash.
-  async findPublicById(id: string, tx?: DbTransaction) {
-    const executor = tx ?? this.db;
-    const [user] = await executor
-      .select({ id: users.id, name: users.name, email: users.email })
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
-
-    return user ?? null;
-  }
-
-  async updateProfile(
-    id: string,
-    data: { name?: string; email?: string },
-    tx?: DbTransaction,
+  async updateUser(
+    userId: number,
+    data: Partial<{ name: string; email: string }>,
   ) {
-    const executor = tx ?? this.db;
-    const [user] = await executor
-      .update(users)
-      .set({
-        ...data,
-        ...(data.email && { email: this.normalizeEmail(data.email) }),
-      })
-      .where(eq(users.id, id))
-      .returning({ id: users.id, name: users.name, email: users.email });
+    const result: any = await this.db
+      .update(this.table)
+      .set(data)
+      .where(eq((this.table as any).id, userId))
+      .returning();
 
-    return user ?? null;
+    return result[0] ?? null;
   }
 
-  async updatePassword(id: string, passwordHash: string, tx?: DbTransaction) {
-    const executor = tx ?? this.db;
-    const [user] = await executor
-      .update(users)
-      .set({ password_hash: passwordHash })
-      .where(eq(users.id, id))
-      .returning({ id: users.id });
+  async updatePassword(userId: string, password_hash: string) {
+    const result = await this.db
+      .update(this.table)
+      .set({ password_hash } as any)
+      .where(eq((this.table as any).id, userId))
+      .returning({ id: (this.table as any).id });
 
-    return user ?? null;
+    return result[0] ?? null;
+  }
+
+  async deleteUser(id: number) {
+    const [deletedUser] = await this.db
+      .delete(this.table)
+      .where(eq((this.table as any).id, id))
+      .returning({ id: (this.table as any).id });
+
+    return deletedUser ?? null;
   }
 }
