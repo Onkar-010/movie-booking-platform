@@ -1,115 +1,75 @@
 /** @format */
 
-import { PgTable } from "drizzle-orm/pg-core";
-import { and, eq, InferInsertModel, isNull } from "drizzle-orm";
-import { BaseRepository } from "../repositories/base.repository";
+import { and, eq, isNull } from "drizzle-orm";
+import { BaseRepository } from "./base.repository";
 import { DbTransaction } from "../db/types";
+import { refresh_token as refreshTokens } from "../db/schemas/refresh_token.schema";
 
-export class RefreshTokenRepository<
-  TTable extends PgTable,
-> extends BaseRepository<TTable> {
-  constructor(table: TTable) {
-    super(table);
+export class RefreshTokenRepository extends BaseRepository<
+  typeof refreshTokens
+> {
+  constructor() {
+    super(refreshTokens);
   }
 
-  async createRefreshToken(data: InferInsertModel<TTable>, tx?: DbTransaction) {
-    const executor = tx ?? this.db;
-    const [token] = await executor.insert(this.table).values(data).returning();
-    return token ?? null;
-  }
-
-  async findRefreshTokenByHash(tokenHash: string, tx?: DbTransaction) {
-    const table = this.table as any;
+  async findByHash(tokenHash: string, tx?: DbTransaction) {
     const executor = tx ?? this.db;
     const [token] = await executor
       .select()
-      .from(table)
-      .where(eq(table.token_hash, tokenHash))
+      .from(refreshTokens)
+      .where(eq(refreshTokens.token_hash, tokenHash))
       .limit(1);
 
     return token ?? null;
   }
 
-  async findRefreshTokenById(id: string, tx?: DbTransaction) {
-    const table = this.table as any;
-    const executor = tx ?? this.db;
-    const [token] = await executor
-      .select()
-      .from(table)
-      .where(eq(table.id, id))
-      .limit(1);
-
-    return token ?? null;
-  }
-
-  async updateRefreshToken(
-    id: string,
-    data: Partial<InferInsertModel<TTable>>,
-    tx?: DbTransaction,
-  ) {
-    const table = this.table as any;
-    const executor = tx ?? this.db;
-    const [token] = await executor
-      .update(table)
-      .set(data)
-      .where(eq(table.id, id))
-      .returning();
-
-    return token ?? null;
-  }
-
-  async revokeAndReplaceRefreshToken(
+  // Returns null if the old token was already revoked (reuse / race).
+  async revokeAndReplace(
     oldTokenId: string,
     newTokenId: string,
     tx?: DbTransaction,
   ) {
-    const table = this.table as any;
     const executor = tx ?? this.db;
     const [token] = await executor
-      .update(table)
+      .update(refreshTokens)
       .set({
         revoked_at: new Date(),
         replaced_by_token_id: newTokenId,
       })
-      .where(eq(table.id, oldTokenId))
+      .where(
+        and(eq(refreshTokens.id, oldTokenId), isNull(refreshTokens.revoked_at)),
+      )
       .returning();
 
     return token ?? null;
   }
 
-  // Revoke all active tokens belonging to the same login session.
-  async revokeActiveTokensByFamily(familyId: string, tx?: DbTransaction) {
-    const table = this.table as any;
+  // Revoke all active tokens in the same login session.
+  async revokeActiveByFamily(familyId: string, tx?: DbTransaction) {
     const executor = tx ?? this.db;
-    const revokedTokens = await executor
-      .update(table)
-      .set({
-        revoked_at: new Date(),
-      })
-      .where(and(eq(table.family_id, familyId), isNull(table.revoked_at)))
-      .returning({ id: table.id });
-
-    return revokedTokens;
-  }
-
-  async deleteRefreshToken(id: string, tx?: DbTransaction) {
-    const table = this.table as any;
-    const executor = tx ?? this.db;
-    const [deleted] = await executor
-      .delete(table)
-      .where(eq(table.id, id))
-      .returning({ id: table.id });
-
-    return deleted ?? null;
-  }
-
-  async revokeAllRefreshTokensByUserId(userId: string, tx?: DbTransaction) {
-    const table = this.table as any;
-    const executor = tx ?? this.db;
-
     return executor
-      .update(table)
+      .update(refreshTokens)
       .set({ revoked_at: new Date() })
-      .where(and(eq(table.user_id, userId), isNull(table.revoked_at)));
+      .where(
+        and(
+          eq(refreshTokens.family_id, familyId),
+          isNull(refreshTokens.revoked_at),
+        ),
+      )
+      .returning({ id: refreshTokens.id });
+  }
+
+  async revokeAllByUserId(userId: string, tx?: DbTransaction) {
+    const executor = tx ?? this.db;
+    return executor
+      .update(refreshTokens)
+      .set({ revoked_at: new Date() })
+      .where(
+        and(
+          eq(refreshTokens.user_id, userId),
+          isNull(refreshTokens.revoked_at),
+        ),
+      )
+      .returning({ id: refreshTokens.id });
   }
 }
