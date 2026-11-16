@@ -4,12 +4,17 @@ import { AuthRepository } from "../repositories/auth.repository";
 import { PasswordUtility } from "../utilities/password.utility";
 import { AppError } from "../utilities/appError.utility";
 import { LoginInput, RegisterInput } from "../validators/auth.validator";
+<<<<<<< HEAD
 import { JWTUtility } from "../utilities/jwt.utility";
 import { RefreshTokenService } from "./RefreshTokenService";
 
 export class AuthService {
   private authRepository: AuthRepository;
   private refreshTokenService: RefreshTokenService;
+=======
+export class AuthService {
+  private authRepository: AuthRepository<typeof users>;
+>>>>>>> parent of 157d532 (Basic Authentication Flow)
 
   // Hashed once at startup. Lets login take the same time
   // whether or not the email exists.
@@ -18,8 +23,12 @@ export class AuthService {
   );
 
   constructor() {
+<<<<<<< HEAD
     this.authRepository = new AuthRepository();
     this.refreshTokenService = new RefreshTokenService();
+=======
+    this.authRepository = new AuthRepository(users);
+>>>>>>> parent of 157d532 (Basic Authentication Flow)
   }
 
   private normalizeEmail(email: string) {
@@ -62,8 +71,15 @@ export class AuthService {
   async VerifyUser(data: LoginInput) {
     const user = await this.authRepository.findByEmail(data.email);
 
+<<<<<<< HEAD
     // Always run a hash comparison (timing fix)
     const hashToCheck = user?.password_hash ?? (await AuthService.dummyHash);
+=======
+    if (user.length == 0) {
+      throw new AppError("Invalid Credentials", 401);
+    }
+
+>>>>>>> parent of 157d532 (Basic Authentication Flow)
     const isVerified = await PasswordUtility.verifyPassword(
       data.password,
       hashToCheck,
@@ -73,6 +89,7 @@ export class AuthService {
       throw new AppError("Invalid Credentials", 401);
     }
 
+<<<<<<< HEAD
     //Create Access Token
     const accessToken = JWTUtility.signAccessToken(user.id);
 
@@ -101,5 +118,9 @@ export class AuthService {
   //logout From All Devices
   async LogoutAllDevices(refreshToken: string) {
     return this.refreshTokenService.revokeAllRefreshTokens(refreshToken);
+=======
+    try {
+    } catch (err: any) {}
+>>>>>>> parent of 157d532 (Basic Authentication Flow)
   }
 }
