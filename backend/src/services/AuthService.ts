@@ -8,8 +8,8 @@ import { LoginInput, RegisterInput } from "../validators/auth.validator";
 import { JWTUtility } from "../utilities/jwt.utility";
 import { RefreshTokenService } from "./RefreshTokenService";
 export class AuthService {
-  private authRepository: AuthRepository<typeof users>;
-  private refreshTokenService: RefreshTokenService;
+  private readonly authRepository: AuthRepository<typeof users>;
+  private readonly refreshTokenService: RefreshTokenService;
 
   constructor() {
     this.authRepository = new AuthRepository(users);

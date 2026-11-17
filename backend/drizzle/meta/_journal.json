@@ -15,6 +15,13 @@
       "when": 1793771054961,
       "tag": "0001_lively_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794889857719,
+      "tag": "0002_romantic_marvel_zombies",
+      "breakpoints": true
     }
   ]
 }

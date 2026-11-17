@@ -10,6 +10,7 @@ import {
 } from "../utilities/refreshToken.utility";
 import { JWTUtility } from "../utilities/jwt.utility";
 import { UnitOfWork } from "../infrastructure/database/UnitOfWork";
+import { DbTransaction } from "../db/types";
 
 export class RefreshTokenService {
   //Setting up Model in repo
@@ -39,9 +40,9 @@ export class RefreshTokenService {
     return { result, token };
   }
 
-  async refreshAccessToken(token: string) {
-    const token_hash = hashRefreshToken(token);
-    // Transaction
+  async refreshAccessToken(token: string, parentTx?: DbTransaction) {
+    const token_hash = hashRefreshToken(token); //Hash the Token
+
     const outcome = await this.uow.transaction(async (tx) => {
       // 1. Find the token.
       const result = await this.refreshrepo.findRefreshTokenByHash(
@@ -105,7 +106,7 @@ export class RefreshTokenService {
         userId: result.user_id,
         refreshToken: newtoken,
       };
-    });
+    }, parentTx);
 
     // 7. Throw only after the transaction commits.
     if (outcome.kind === "reuse") {
