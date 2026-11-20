@@ -1,16 +1,16 @@
 /** @format */
 
-import { refresh_token } from "../db/schemas/refresh_token.schema";
-import { RefreshTokenRepository } from "../repositories/refreshToken.repository";
-import { AppError } from "../utilities/appError.utility";
+import { refresh_token } from "../../db/schemas/refresh_token.schema";
+import { RefreshTokenRepository } from "../../repositories/refreshToken.repository";
+import { AppError } from "../../utilities/appError.utility";
 import { randomUUID } from "node:crypto";
 import {
   getRefreshToken,
   hashRefreshToken,
-} from "../utilities/refreshToken.utility";
-import { JWTUtility } from "../utilities/jwt.utility";
-import { UnitOfWork } from "../infrastructure/database/UnitOfWork";
-import { DbTransaction } from "../db/types";
+} from "../../utilities/refreshToken.utility";
+import { JWTUtility } from "../../utilities/jwt.utility";
+import { UnitOfWork } from "../../infrastructure/database/UnitOfWork";
+import { DbTransaction } from "../../db/types";
 
 export class RefreshTokenService {
   //Setting up Model in repo

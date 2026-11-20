@@ -10,11 +10,15 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { city } from "./city.schema";
+import { organizations } from "./organizations.schema";
 
 export const theater = pgTable(
   "theater",
   {
     id: uuid().primaryKey().defaultRandom(),
+    organization_id: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "restrict" }),
     name: varchar({ length: 255 }).notNull(),
     city_id: uuid("city_id")
       .notNull()
@@ -28,5 +32,8 @@ export const theater = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [index("theater_city_idx").on(t.city_id)],
+  (t) => [
+    index("theater_city_idx").on(t.city_id),
+    index("theater_organization_idx").on(t.organization_id),
+  ],
 );

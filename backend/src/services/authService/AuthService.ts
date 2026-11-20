@@ -1,12 +1,12 @@
 /** @format */
 
-import { AuthRepository } from "../repositories/auth.repository";
-import { users } from "../db/schemas/users.schema";
-import { PasswordUtility } from "../utilities/password.utility";
-import { AppError } from "../utilities/appError.utility";
-import { LoginInput, RegisterInput } from "../validators/auth.validator";
-import { JWTUtility } from "../utilities/jwt.utility";
-import { RefreshTokenService } from "./RefreshTokenService";
+import { AuthRepository } from "../../repositories/auth.repository";
+import { users } from "../../db/schemas/users.schema";
+import { PasswordUtility } from "../../utilities/password.utility";
+import { AppError } from "../../utilities/appError.utility";
+import { LoginInput, RegisterInput } from "../../validators/auth.validator";
+import { JWTUtility } from "../../utilities/jwt.utility";
+import { RefreshTokenService } from "../authService/RefreshTokenService";
 export class AuthService {
   private readonly authRepository: AuthRepository<typeof users>;
   private readonly refreshTokenService: RefreshTokenService;
